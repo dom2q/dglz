@@ -1,0 +1,3302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大怪路子比赛计分系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2980b9;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        h2 {
+            color: #3498db;
+            margin-top: 20px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #ddd;
+            font-size: 1.3rem;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin-top: 15px;
+            font-size: 1.1rem;
+        }
+        
+        h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .desktop-only {
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+                font-size: 16px;
+            }
+            
+            .container {
+                padding: 25px;
+                max-width: 1400px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            h3 {
+                font-size: 1.3rem;
+            }
+            
+            .section {
+                padding: 20px;
+                margin-bottom: 25px;
+            }
+            
+            .desktop-only {
+                display: block;
+            }
+        }
+        
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .input-section {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+        }
+        
+        .player-input {
+            width: 100%;
+        }
+        
+        .player-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .player-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .button-group {
+                flex-direction: row;
+            }
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            flex: 1;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        button.reset {
+            background-color: #e74c3c;
+        }
+        
+        button.reset:hover {
+            background-color: #c0392b;
+        }
+        
+        button.history {
+            background-color: #9b59b6;
+        }
+        
+        button.history:hover {
+            background-color: #8e44ad;
+        }
+        
+        .game-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .game-controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+        
+        .round-info {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .round-info {
+                font-size: 18px;
+                text-align: left;
+            }
+        }
+        
+        .ranking-input {
+            margin-top: 15px;
+        }
+        
+        .ranking-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 768px) {
+            .ranking-row {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+        
+        .rank-label {
+            width: 100%;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        @media (min-width: 768px) {
+            .rank-label {
+                width: 100px;
+                margin-bottom: 0;
+            }
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: white;
+        }
+        
+        @media (min-width: 768px) {
+            select {
+                flex: 1;
+            }
+        }
+        
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .results {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        .score-card {
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .score-card {
+                padding: 20px;
+            }
+        }
+        
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            min-width: 300px;
+        }
+        
+        .score-table th, .score-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        
+        @media (min-width: 768px) {
+            .score-table th, .score-table td {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+        }
+        
+        .score-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .score-table tr:hover {
+            background-color: #f5f9ff;
+        }
+        
+        .total-score {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .total-score {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .chart-container {
+            margin-top: 20px;
+            height: 250px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 300px;
+                margin-top: 25px;
+            }
+        }
+        
+        .chart-row {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 20px;
+                margin-top: 25px;
+            }
+        }
+        
+        .chart-item {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 15px;
+            height: 280px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-item {
+                padding: 20px;
+                height: 320px;
+            }
+        }
+        
+        .group-display {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .group-display {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 20px;
+            }
+        }
+        
+        .group {
+            width: 100%;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        @media (min-width: 768px) {
+            .group {
+                flex: 1;
+                min-width: 250px;
+                padding: 20px;
+            }
+        }
+        
+        .group h3 {
+            color: #2980b9;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .player-list {
+            list-style-type: none;
+        }
+        
+        .player-list li {
+            padding: 8px;
+            margin-bottom: 6px;
+            background-color: white;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .winner {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .current-round {
+            background-color: #fff8e1;
+            border-left: 4px solid #f39c12 !important;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        @media (min-width: 768px) {
+            .instructions {
+                padding: 15px;
+                margin-top: 20px;
+            }
+        }
+        
+        .instructions h4 {
+            color: #27ae60;
+            margin-bottom: 8px;
+        }
+        
+        .instructions ul {
+            padding-left: 18px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        @media (min-width: 768px) {
+            .instructions li {
+                font-size: 1rem;
+            }
+        }
+        
+        .round-summary {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        @media (min-width: 768px) {
+            .round-summary {
+                padding: 20px;
+                margin-top: 20px;
+            }
+        }
+        
+        .round-summary h3 {
+            margin-top: 0;
+        }
+        
+        .summary-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-content {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        .summary-item {
+            background-color: white;
+            padding: 12px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .summary-item {
+                padding: 15px;
+            }
+        }
+        
+        .current-leader {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .round-score-display {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .round-score-display {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+            }
+        }
+        
+        .team-score {
+            text-align: center;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .team-score {
+                min-width: 120px;
+                width: auto;
+            }
+        }
+        
+        .team-a {
+            border-top: 4px solid #3498db;
+        }
+        
+        .team-b {
+            border-top: 4px solid #e74c3c;
+        }
+        
+        .team-score h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .team-score .score {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        @media (min-width: 768px) {
+            .team-score .score {
+                font-size: 32px;
+            }
+        }
+        
+        .team-a .score {
+            color: #3498db;
+        }
+        
+        .team-b .score {
+            color: #e74c3c;
+        }
+        
+        .vs {
+            font-size: 20px;
+            font-weight: bold;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        
+        @media (min-width: 768px) {
+            .vs {
+                font-size: 24px;
+            }
+        }
+        
+        /* 移动端标签页样式 */
+        .mobile-tabs-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: white;
+            padding: 10px 0;
+            margin: -15px -15px 15px -15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .mobile-tabs {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-tabs-container {
+                display: none;
+            }
+        }
+        
+        .mobile-tab {
+            padding: 8px 15px;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        
+        .mobile-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        .all-rounds-stats {
+            margin-top: 20px;
+        }
+        
+        .all-rounds-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        .all-rounds-table th, .all-rounds-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+            min-width: 80px;
+        }
+        
+        @media (min-width: 768px) {
+            .all-rounds-table th, .all-rounds-table td {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
+        }
+        
+        .all-rounds-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+            position: sticky;
+            left: 0;
+        }
+        
+        .all-rounds-table tr:hover {
+            background-color: #f5f9ff;
+        }
+        
+        .player-name-cell {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            font-weight: bold;
+            min-width: 80px;
+        }
+        
+        .group-a-player {
+            color: #3498db;
+        }
+        
+        .group-b-player {
+            color: #e74c3c;
+        }
+        
+        .first-place {
+            background-color: rgba(255, 215, 0, 0.2);
+            font-weight: bold;
+        }
+        
+        .last-place {
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        
+        .stats-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-summary {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+        
+        .stats-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stats-item h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-box {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .action-buttons {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
+        .action-button {
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .action-button:hover {
+            background-color: #27ae60;
+        }
+        
+        .action-button.secondary {
+            background-color: #95a5a6;
+        }
+        
+        .action-button.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        /* 历史记录样式 */
+        .history-section {
+            margin-top: 20px;
+        }
+        
+        .history-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .history-controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+        
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .history-item:hover {
+            background-color: #f5f9ff;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-item.active {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+        }
+        
+        .history-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .history-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .history-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .history-action-btn {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .load-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .export-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+        }
+        
+        .history-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .history-details h3 {
+            margin-top: 0;
+        }
+        
+        .save-current-game {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff8e1;
+            border-radius: 5px;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .save-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .save-form {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+        
+        .save-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .save-button {
+            padding: 10px 20px;
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .save-button:hover {
+            background-color: #8e44ad;
+        }
+        
+        /* 移动端导航提示 */
+        .mobile-nav-hint {
+            background-color: #fff8e1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #f39c12;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-nav-hint {
+                display: none;
+            }
+        }
+        
+        .mobile-nav-hint .icon {
+            font-size: 1.2rem;
+        }
+        
+        /* 规则说明特殊样式 */
+        .rule-highlight {
+            background-color: #fff8e1;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            border-left: 3px solid #e74c3c;
+        }
+		
+		/* Betting */
+		.betting-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .betting-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .betting-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .betting-tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .betting-content {
+            display: none;
+        }
+        
+        .betting-content.active {
+            display: block;
+        }
+        
+        .betting-type {
+            margin-bottom: 20px;
+        }
+        
+        .betting-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .betting-controls {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+        }
+        
+        .bet-control {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .bet-control label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .bet-control select, .bet-control input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .bet-amount-input {
+            position: relative;
+        }
+        
+        .bet-amount-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .bet-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .bet-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .place-bet-btn {
+            background-color: #2ecc71;
+            color: white;
+            flex: 2;
+        }
+        
+        .place-bet-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .clear-bet-btn {
+            background-color: #e74c3c;
+            color: white;
+            flex: 1;
+        }
+        
+        .clear-bet-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .points-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .player-points {
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .player-points.group-a {
+            border-left: 3px solid #3498db;
+        }
+        
+        .player-points.group-b {
+            border-left: 3px solid #e74c3c;
+        }
+        
+        .player-points .name {
+            font-weight: bold;
+        }
+        
+        .player-points .points {
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .current-bets {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .current-bets h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .bet-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            border-left: 3px solid #9b59b6;
+            font-size: 0.9rem;
+        }
+        
+        .bet-item.win-bet {
+            border-left-color: #2ecc71;
+        }
+        
+        .bet-item.rank-bet {
+            border-left-color: #9b59b6;
+        }
+        
+        .bet-item .bet-info {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .bet-item .bet-type {
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        
+        .bet-item .bet-amount {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .betting-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #fff8e1;
+            border-radius: 5px;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .betting-status .status-text {
+            font-weight: bold;
+        }
+        
+        .betting-status .lock-btn {
+            padding: 5px 10px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .betting-status .lock-btn:hover {
+            background-color: #d68910;
+        }
+        
+        .betting-status .lock-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .settlement-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f6f3;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .settlement-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: white;
+            border-radius: 3px;
+            border-left: 3px solid #27ae60;
+        }
+        
+        .settlement-item.win {
+            border-left-color: #27ae60;
+        }
+        
+        .settlement-item.loss {
+            border-left-color: #e74c3c;
+        }
+        
+        .odds-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .odds-item {
+            padding: 5px 10px;
+            background-color: white;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .odds-item .rank {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .odds-item .odds {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .betting-history {
+            margin-top: 15px;
+        }
+        
+        .betting-history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .betting-history-table th, .betting-history-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .betting-history-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .betting-profit {
+            font-weight: bold;
+        }
+        
+        .betting-profit.positive {
+            color: #27ae60;
+        }
+        
+        .betting-profit.negative {
+            color: #e74c3c;
+        }
+        
+        .betting-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .betting-summary {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+        
+        .summary-item {
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+        }
+        
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .summary-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>大怪路子比赛计分系统</h1>
+        
+        <!-- 移动端标签页导航 -->
+        <div class="mobile-tabs-container">
+            <div class="mobile-tabs">
+                <div class="mobile-tab active" data-page="input">输入</div>
+                <div class="mobile-tab" data-page="game">比赛</div>
+                <div class="mobile-tab" data-page="stats">统计</div>
+                <div class="mobile-tab" data-page="visualization">图表</div>
+                <div class="mobile-tab" data-page="results">结果</div>
+                <div class="mobile-tab" data-page="history">历史</div>
+            </div>
+        </div>
+        
+        <!-- 输入页面 -->
+        <div id="inputPage" class="page-section active">
+            <div class="section">
+                <h2>第一步：输入选手姓名和分组</h2>
+                <div class="instructions">
+                    <h4>分组说明</h4>
+                    <p>请将6名选手分为两组：甲组（3人）和乙组（3人）。</p>
+                </div>
+                
+                <div class="input-section">
+                    <div class="player-input">
+                        <label for="player1">甲组选手1：</label>
+                        <input type="text" id="player1" placeholder="请输入甲组选手1姓名">
+                    </div>
+                    <div class="player-input">
+                        <label for="player2">甲组选手2：</label>
+                        <input type="text" id="player2" placeholder="请输入甲组选手2姓名">
+                    </div>
+                    <div class="player-input">
+                        <label for="player3">甲组选手3：</label>
+                        <input type="text" id="player3" placeholder="请输入甲组选手3姓名">
+                    </div>
+                    <div class="player-input">
+                        <label for="player4">乙组选手1：</label>
+                        <input type="text" id="player4" placeholder="请输入乙组选手1姓名">
+                    </div>
+                    <div class="player-input">
+                        <label for="player5">乙组选手2：</label>
+                        <input type="text" id="player5" placeholder="请输入乙组选手2姓名">
+                    </div>
+                    <div class="player-input">
+                        <label for="player6">乙组选手3：</label>
+                        <input type="text" id="player6" placeholder="请输入乙组选手3姓名">
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="startGame">开始比赛</button>
+                    <button id="viewHistory" class="history">查看历史记录</button>
+                    <button id="resetAll" class="reset">重置所有数据</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 比赛页面 -->
+        <div id="gamePage" class="page-section">
+            <div class="section">
+                <h2>分组情况</h2>
+                <div class="group-display">
+                    <div class="group" id="groupA">
+                        <h3>甲组</h3>
+                        <ul class="player-list" id="groupAList"></ul>
+                    </div>
+                    <div class="group" id="groupB">
+                        <h3>乙组</h3>
+                        <ul class="player-list" id="groupBList"></ul>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h4>比赛规则说明</h4>
+                    <ul>
+                        <li>比赛共进行六轮，每位选手依次坐庄一次</li>
+                        <li>每轮比赛后，请根据选手表现排名（1-6名）</li>
+                        <li><strong>计分规则：</strong>
+                            <ol>
+                                <li>甲组选手获得一、二、三名 → 甲组得8分</li>
+                                <li>甲组选手获得第一名，且乙组有两人获得第五、六名 → 甲组得5分</li>
+                                <li>甲组选手获得第一名，且乙组有一人获得第六名 → 甲组得3分</li>
+                                <li>甲组选手获得第一名，且甲组有一人获得第六名 → 甲组得1分</li>
+                                <li class="rule-highlight">甲组选手获得第一名，且甲组有两人获得第五、六名 → 甲组得0分</li>
+                            </ol>
+                            <div style="margin-top: 10px; font-style: italic;">乙组计分规则同理</div>
+                        </li>
+                        <li>六轮结束后，总分高的组获胜</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>进行比赛</h2>
+                <div class="game-controls">
+                    <div class="round-info">当前轮次：<span id="currentRound">1</span>/6</div>
+                    <div class="button-group">
+                        <button id="prevRound" disabled>上一轮</button>
+                        <button id="nextRound">下一轮</button>
+                        <button id="submitRound">提交本轮排名</button>
+                    </div>
+                </div>
+                
+                <div class="ranking-input">
+                    <h3>本轮选手排名（从第1名到第6名）</h3>
+                    <div id="rankingInputs"></div>
+                </div>
+                
+                <div class="mobile-nav-hint">
+                    <div class="icon">📊</div>
+                    <div>提交排名后，可在"统计"页面查看详细数据</div>
+                </div>
+            </div>
+            
+            <!-- 保存当前比赛 -->
+            <div class="section save-current-game">
+                <h3>保存当前比赛</h3>
+                <p>保存当前比赛进度，以便以后继续或查看。</p>
+                <div class="save-form">
+                    <input type="text" id="saveName" class="save-input" placeholder="输入比赛名称（例如：2023年第一场比赛）">
+                    <button id="saveGame" class="save-button">保存比赛</button>
+                </div>
+                <div id="saveMessage" style="margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+        </div>
+        
+        <!-- 统计页面 -->
+        <div id="statsPage" class="page-section">
+            <div class="section">
+                <h2>本轮统计</h2>
+                <div class="round-summary">
+                    <h3>第<span id="summaryRound">1</span>轮结果</h3>
+                    
+                    <div class="round-score-display">
+                        <div class="team-score team-a">
+                            <h4>甲组</h4>
+                            <div class="score" id="roundScoreA">0</div>
+                            <div>本轮得分</div>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team-score team-b">
+                            <h4>乙组</h4>
+                            <div class="score" id="roundScoreB">0</div>
+                            <div>本轮得分</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-content">
+                        <div class="summary-item">
+                            <h4>本轮排名</h4>
+                            <table class="score-table">
+                                <thead>
+                                    <tr>
+                                        <th>名次</th>
+                                        <th>选手</th>
+                                        <th>组别</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roundRankingBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <h4>本轮第一名</h4>
+                            <div style="text-align: center; padding: 15px;">
+                                <div style="font-size: 28px; font-weight: bold; color: #e74c3c;" id="firstPlacePlayer">-</div>
+                                <div style="margin-top: 8px;">组别：<span id="firstPlaceGroup">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="total-score" style="margin-top: 15px;">
+                        当前总得分：甲组 <span id="currentTotalA">0</span> : <span id="currentTotalB">0</span> 乙组
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <!-- 所有轮次比赛统计 -->
+                <div class="all-rounds-stats">
+                    <h2>所有轮次比赛统计</h2>
+                    <div class="score-card">
+                        <div style="overflow-x: auto;">
+                            <table class="all-rounds-table">
+                                <thead>
+                                    <tr id="allRoundsHeader">
+                                        <th>选手/轮次</th>
+                                        <!-- 表头将通过JS动态生成 -->
+                                    </tr>
+                                </thead>
+                                <tbody id="allRoundsBody">
+                                    <!-- 表格内容将通过JS动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计数据摘要 -->
+                <div class="stats-summary">
+                    <div class="stats-item">
+                        <h4>组别统计</h4>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-value" id="teamAScore">0</div>
+                                <div class="stat-label">甲组总得分</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="teamBScore">0</div>
+                                <div class="stat-label">乙组总得分</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="teamAFirst">0</div>
+                                <div class="stat-label">甲组第一名次数</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="teamBFirst">0</div>
+                                <div class="stat-label">乙组第一名次数</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-item">
+                        <h4>选手表现</h4>
+                        <div id="playerPerformanceStats">
+                            <!-- 选手表现统计将通过JS动态生成 -->
+                            <div style="text-align: center; padding: 20px; color: #95a5a6;">
+                                暂无数据，请开始比赛
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 行动按钮 -->
+                <div class="action-buttons">
+                    <button id="continueGame" class="action-button">继续比赛</button>
+                    <button id="viewCharts" class="action-button secondary">查看可视化图表</button>
+                    <button id="saveCurrent" class="action-button secondary">保存当前比赛</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 可视化图表页面 -->
+        <div id="visualizationPage" class="page-section">
+            <div class="section">
+                <h2>数据可视化</h2>
+                
+                <div class="chart-row">
+                    <div class="chart-item">
+                        <h3>两组累计得分走势</h3>
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                    <div class="chart-item">
+                        <h3>个人平均排名</h3>
+                        <canvas id="rankingChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-row">
+                    <div class="chart-item">
+                        <h3>组别得分分布</h3>
+                        <canvas id="teamScoreChart"></canvas>
+                    </div>
+                    <div class="chart-item">
+                        <h3>个人第一名次数统计</h3>
+                        <canvas id="firstPlaceChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 返回按钮 -->
+                <div class="action-buttons">
+                    <button id="backToStats" class="action-button secondary">返回统计页面</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最终结果页面 -->
+        <div id="resultsPage" class="page-section">
+            <div class="section">
+                <h2>最终比赛结果</h2>
+                
+                <div class="results">
+                    <div class="score-card">
+                        <h3>每轮积分统计</h3>
+                        <table class="score-table" id="roundScores">
+                            <thead>
+                                <tr>
+                                    <th>轮次</th>
+                                    <th>甲组得分</th>
+                                    <th>乙组得分</th>
+                                    <th>本轮第一名</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roundScoresBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="score-card">
+                        <h3>个人排名统计</h3>
+                        <table class="score-table" id="playerStats">
+                            <thead>
+                                <tr>
+                                    <th>选手</th>
+                                    <th>组别</th>
+                                    <th>第一名次数</th>
+                                    <th>平均排名</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerStatsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="total-score">
+                    最终得分：甲组 <span id="totalScoreA">0</span> : <span id="totalScoreB">0</span> 乙组
+                    <div id="winnerMessage" style="font-size: 1.2rem; margin-top: 10px;"></div>
+                </div>
+                
+                <!-- 保存比赛按钮 -->
+                <div class="action-buttons">
+                    <button id="saveFinalResult" class="action-button">保存比赛结果</button>
+                    <button id="backToGameFromResults" class="action-button secondary">返回比赛</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史记录页面 -->
+        <div id="historyPage" class="page-section">
+            <div class="section">
+                <h2>历史记录</h2>
+                <p>查看之前保存的比赛记录。点击记录可查看详细信息，可以加载记录或删除记录。</p>
+                
+                <div class="history-controls">
+                    <div class="button-group">
+                        <button id="refreshHistory">刷新列表</button>
+                        <button id="clearAllHistory" class="reset">清空所有记录</button>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d;">
+                        共 <span id="historyCount">0</span> 条记录
+                    </div>
+                </div>
+                
+                <div class="history-list" id="historyList">
+                    <!-- 历史记录将通过JS动态生成 -->
+                    <div class="no-history">
+                        <p>暂无历史记录</p>
+                        <p>开始比赛并保存后，记录会显示在这里</p>
+                    </div>
+                </div>
+                
+                <div class="history-details" id="historyDetails" style="display: none;">
+                    <h3>比赛详情</h3>
+                    <div id="historyDetailContent">
+                        <!-- 详情内容将通过JS动态生成 -->
+                    </div>
+                    <div class="action-buttons" style="margin-top: 15px;">
+                        <button id="loadSelectedHistory" class="action-button">加载此记录</button>
+                        <button id="deleteSelectedHistory" class="action-button secondary">删除此记录</button>
+                        <button id="closeHistoryDetails" class="action-button secondary">关闭详情</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            players: [],
+            groups: {
+                A: [],
+                B: []
+            },
+            currentRound: 1,
+            rankings: {}, // 存储每轮排名 {round: {1: player, 2: player, ...}}
+            scores: {
+                A: Array(6).fill(0),
+                B: Array(6).fill(0)
+            },
+            playerStats: {}, // 存储每个选手的第一名次数和排名总和
+            gameId: null, // 当前游戏ID
+            gameName: '', // 当前游戏名称
+            createdAt: null, // 创建时间
+            updatedAt: null // 最后更新时间
+        };
+        
+        // DOM元素
+        const startGameBtn = document.getElementById('startGame');
+        const resetAllBtn = document.getElementById('resetAll');
+        const prevRoundBtn = document.getElementById('prevRound');
+        const nextRoundBtn = document.getElementById('nextRound');
+        const submitRoundBtn = document.getElementById('submitRound');
+        const continueGameBtn = document.getElementById('continueGame');
+        const viewChartsBtn = document.getElementById('viewCharts');
+        const backToStatsBtn = document.getElementById('backToStats');
+        const backToGameBtn = document.getElementById('backToGameFromResults');
+        const viewHistoryBtn = document.getElementById('viewHistory');
+        const saveGameBtn = document.getElementById('saveGame');
+        const saveCurrentBtn = document.getElementById('saveCurrent');
+        const saveFinalResultBtn = document.getElementById('saveFinalResult');
+        const refreshHistoryBtn = document.getElementById('refreshHistory');
+        const clearAllHistoryBtn = document.getElementById('clearAllHistory');
+        const loadSelectedHistoryBtn = document.getElementById('loadSelectedHistory');
+        const deleteSelectedHistoryBtn = document.getElementById('deleteSelectedHistory');
+        const closeHistoryDetailsBtn = document.getElementById('closeHistoryDetails');
+        
+        // 移动端标签页
+        const mobileTabs = document.querySelectorAll('.mobile-tab');
+        const pageSections = document.querySelectorAll('.page-section');
+        
+        // 图表实例
+        let scoreChart = null;
+        let rankingChart = null;
+        let teamScoreChart = null;
+        let firstPlaceChart = null;
+        
+        // 当前选中的历史记录ID
+        let selectedHistoryId = null;
+        
+        // 初始化
+        function initGame() {
+            // 获取选手姓名
+            gameState.players = [];
+            gameState.groups.A = [];
+            gameState.groups.B = [];
+            
+            // 获取甲组选手
+            for (let i = 1; i <= 3; i++) {
+                const playerName = document.getElementById(`player${i}`).value.trim();
+                if (playerName) {
+                    gameState.players.push(playerName);
+                    gameState.groups.A.push(playerName);
+                    // 初始化选手统计
+                    gameState.playerStats[playerName] = {
+                        group: 'A',
+                        firstPlaceCount: 0,
+                        rankSum: 0,
+                        ranks: Array(6).fill('-')
+                    };
+                }
+            }
+            
+            // 获取乙组选手
+            for (let i = 4; i <= 6; i++) {
+                const playerName = document.getElementById(`player${i}`).value.trim();
+                if (playerName) {
+                    gameState.players.push(playerName);
+                    gameState.groups.B.push(playerName);
+                    // 初始化选手统计
+                    gameState.playerStats[playerName] = {
+                        group: 'B',
+                        firstPlaceCount: 0,
+                        rankSum: 0,
+                        ranks: Array(6).fill('-')
+                    };
+                }
+            }
+            
+            if (gameState.players.length !== 6) {
+                alert('请填写所有6名选手的姓名！');
+                return false;
+            }
+            
+            // 生成新的游戏ID
+            gameState.gameId = generateGameId();
+            gameState.createdAt = new Date().toISOString();
+            gameState.updatedAt = gameState.createdAt;
+            
+            return true;
+        }
+        
+        // 生成游戏ID
+        function generateGameId() {
+            return 'game_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // 显示分组
+        function displayGroups() {
+            const groupAList = document.getElementById('groupAList');
+            const groupBList = document.getElementById('groupBList');
+            
+            groupAList.innerHTML = '';
+            groupBList.innerHTML = '';
+            
+            gameState.groups.A.forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = player;
+                groupAList.appendChild(li);
+            });
+            
+            gameState.groups.B.forEach(player => {
+                const li = document.createElement('li');
+                li.textContent = player;
+                groupBList.appendChild(li);
+            });
+            
+            // 切换到游戏页面
+            switchPage('game');
+            
+            // 初始化排名输入
+            initRankingInput();
+            updateGameControls();
+        }
+        
+        // 初始化排名输入
+        function initRankingInput() {
+            const rankingInputs = document.getElementById('rankingInputs');
+            rankingInputs.innerHTML = '';
+            
+            // 创建6个排名输入行
+            for (let rank = 1; rank <= 6; rank++) {
+                const row = document.createElement('div');
+                row.className = 'ranking-row';
+                
+                const label = document.createElement('div');
+                label.className = 'rank-label';
+                label.textContent = `第${rank}名：`;
+                
+                const select = document.createElement('select');
+                select.id = `rank${rank}`;
+                
+                // 添加默认选项
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = `请选择第${rank}名选手`;
+                select.appendChild(defaultOption);
+                
+                // 添加选手选项
+                gameState.players.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player;
+                    option.textContent = player;
+                    select.appendChild(option);
+                });
+                
+                // 如果已有本轮排名，则选中
+                if (gameState.rankings[gameState.currentRound] && 
+                    gameState.rankings[gameState.currentRound][rank]) {
+                    select.value = gameState.rankings[gameState.currentRound][rank];
+                }
+                
+                row.appendChild(label);
+                row.appendChild(select);
+                rankingInputs.appendChild(row);
+            }
+            
+            // 更新当前轮次显示
+            document.getElementById('currentRound').textContent = gameState.currentRound;
+        }
+        
+        // 更新游戏控制按钮状态
+        function updateGameControls() {
+            prevRoundBtn.disabled = gameState.currentRound === 1;
+            nextRoundBtn.disabled = gameState.currentRound === 6;
+            
+            // 如果当前轮次已提交排名，则禁用排名输入
+            const isSubmitted = gameState.rankings[gameState.currentRound];
+            const selects = document.querySelectorAll('.ranking-row select');
+            selects.forEach(select => {
+                select.disabled = isSubmitted;
+            });
+            
+            submitRoundBtn.disabled = isSubmitted;
+            submitRoundBtn.textContent = isSubmitted ? '已提交' : '提交本轮排名';
+            
+            // 如果所有轮次都完成，显示结果
+            if (gameState.currentRound === 6 && isSubmitted) {
+                calculateFinalResults();
+                switchPage('results');
+            }
+        }
+        
+        // 提交本轮排名
+        function submitRoundRankings() {
+            const round = gameState.currentRound;
+            const ranking = {};
+            let isValid = true;
+            const selectedPlayers = new Set();
+            
+            // 检查每个排名是否已选择且不重复
+            for (let rank = 1; rank <= 6; rank++) {
+                const select = document.getElementById(`rank${rank}`);
+                const player = select.value;
+                
+                if (!player) {
+                    alert(`请选择第${rank}名选手！`);
+                    isValid = false;
+                    break;
+                }
+                
+                if (selectedPlayers.has(player)) {
+                    alert(`选手"${player}"已被选择，请勿重复选择！`);
+                    isValid = false;
+                    break;
+                }
+                
+                ranking[rank] = player;
+                selectedPlayers.add(player);
+            }
+            
+            if (!isValid) return;
+            
+            // 保存排名
+            gameState.rankings[round] = ranking;
+            
+            // 更新选手统计
+            Object.keys(ranking).forEach(rank => {
+                const player = ranking[rank];
+                const rankNum = parseInt(rank);
+                gameState.playerStats[player].rankSum += rankNum;
+                gameState.playerStats[player].ranks[round - 1] = rankNum;
+                
+                if (rankNum === 1) {
+                    gameState.playerStats[player].firstPlaceCount++;
+                }
+            });
+            
+            // 计算本轮得分
+            calculateRoundScore(round);
+            
+            // 更新游戏时间
+            gameState.updatedAt = new Date().toISOString();
+            
+            // 显示本轮统计
+            showRoundSummary(round);
+            
+            // 更新所有统计数据
+            updateAllStats();
+            
+            // 更新所有图表
+            updateAllCharts();
+            
+            // 更新控制按钮
+            updateGameControls();
+            
+            // 切换到统计页面
+            switchPage('stats');
+            
+            // 显示成功消息
+            alert(`第${round}轮排名已提交！已切换到统计页面。`);
+            
+            // 自动保存当前游戏
+            autoSaveGame();
+        }
+        
+        // 计算单轮得分 - 根据修改后的规则
+        function calculateRoundScore(round) {
+            const ranking = gameState.rankings[round];
+            
+            // 找出第一名
+            const firstPlacePlayer = ranking[1];
+            const firstPlaceGroup = gameState.playerStats[firstPlacePlayer].group;
+            
+            // 找出第六名
+            const sixthPlacePlayer = ranking[6];
+            const sixthPlaceGroup = gameState.playerStats[sixthPlacePlayer].group;
+            
+            // 找出第五名
+            const fifthPlacePlayer = ranking[5];
+            const fifthPlaceGroup = gameState.playerStats[fifthPlacePlayer].group;
+            
+            // 找出第二名和第三名
+            const secondPlacePlayer = ranking[2];
+            const secondPlaceGroup = gameState.playerStats[secondPlacePlayer].group;
+            const thirdPlacePlayer = ranking[3];
+            const thirdPlaceGroup = gameState.playerStats[thirdPlacePlayer].group;
+            
+            let score = 0;
+            
+            // 检查是否包揽前三名
+            const isSweepTopThree = firstPlaceGroup === secondPlaceGroup && 
+                                   firstPlaceGroup === thirdPlaceGroup;
+            
+            if (isSweepTopThree) {
+                score = 8;
+            } else {
+                // 检查后两名是否都是另一组
+                const otherGroup = firstPlaceGroup === 'A' ? 'B' : 'A';
+                
+                // 根据新规则判断得分
+                if (fifthPlaceGroup === otherGroup && sixthPlaceGroup === otherGroup) {
+                    // 第五、六名都是另一组
+                    score = 5;
+                } else if (sixthPlaceGroup === otherGroup) {
+                    // 只有第六名是另一组
+                    score = 3;
+                } else if (sixthPlaceGroup === firstPlaceGroup && fifthPlaceGroup !== firstPlaceGroup) {
+                    // 第六名是同组，但第五名不是同组
+                    score = 1;
+                } else if (fifthPlaceGroup === firstPlaceGroup && sixthPlaceGroup === firstPlaceGroup) {
+                    // 第五、六名都是同组 - 新增规则：得0分
+                    score = 0;
+                } else if (sixthPlaceGroup === firstPlaceGroup) {
+                    // 第六名是同组，但第五名情况未明确 - 默认为1分（与原规则保持一致）
+                    score = 1;
+                }
+            }
+            
+            // 记录得分
+            if (firstPlaceGroup === 'A') {
+                gameState.scores.A[round - 1] = score;
+                gameState.scores.B[round - 1] = 0;
+            } else {
+                gameState.scores.B[round - 1] = score;
+                gameState.scores.A[round - 1] = 0;
+            }
+            
+            // 记录得分规则说明（用于调试）
+            gameState.rankings[round].scoreRule = getScoreRuleDescription(round);
+        }
+        
+        // 获取得分规则说明
+        function getScoreRuleDescription(round) {
+            const ranking = gameState.rankings[round];
+            
+            // 找出第一名
+            const firstPlacePlayer = ranking[1];
+            const firstPlaceGroup = gameState.playerStats[firstPlacePlayer].group;
+            
+            // 找出第六名
+            const sixthPlacePlayer = ranking[6];
+            const sixthPlaceGroup = gameState.playerStats[sixthPlacePlayer].group;
+            
+            // 找出第五名
+            const fifthPlacePlayer = ranking[5];
+            const fifthPlaceGroup = gameState.playerStats[fifthPlacePlayer].group;
+            
+            // 找出第二名和第三名
+            const secondPlacePlayer = ranking[2];
+            const secondPlaceGroup = gameState.playerStats[secondPlacePlayer].group;
+            const thirdPlacePlayer = ranking[3];
+            const thirdPlaceGroup = gameState.playerStats[thirdPlacePlayer].group;
+            
+            const isSweepTopThree = firstPlaceGroup === secondPlaceGroup && 
+                                   firstPlaceGroup === thirdPlaceGroup;
+            
+            if (isSweepTopThree) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组包揽前三名，得8分`;
+            }
+            
+            const otherGroup = firstPlaceGroup === 'A' ? 'B' : 'A';
+            
+            if (fifthPlaceGroup === otherGroup && sixthPlaceGroup === otherGroup) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组第一名，${otherGroup === 'A' ? '甲' : '乙'}组第五、六名，得5分`;
+            } else if (sixthPlaceGroup === otherGroup) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组第一名，${otherGroup === 'A' ? '甲' : '乙'}组第六名，得3分`;
+            } else if (sixthPlaceGroup === firstPlaceGroup && fifthPlaceGroup !== firstPlaceGroup) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组第一名，${firstPlaceGroup === 'A' ? '甲' : '乙'}组第六名，${otherGroup === 'A' ? '甲' : '乙'}组第五名，得1分`;
+            } else if (fifthPlaceGroup === firstPlaceGroup && sixthPlaceGroup === firstPlaceGroup) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组第一名，${firstPlaceGroup === 'A' ? '甲' : '乙'}组第五、六名，得0分`;
+            } else if (sixthPlaceGroup === firstPlaceGroup) {
+                return `${firstPlaceGroup === 'A' ? '甲' : '乙'}组第一名，${firstPlaceGroup === 'A' ? '甲' : '乙'}组第六名，得1分`;
+            }
+            
+            return '未知规则';
+        }
+        
+        // 显示本轮统计
+        function showRoundSummary(round) {
+            document.getElementById('summaryRound').textContent = round;
+            
+            // 显示本轮得分
+            document.getElementById('roundScoreA').textContent = gameState.scores.A[round - 1];
+            document.getElementById('roundScoreB').textContent = gameState.scores.B[round - 1];
+            
+            // 计算当前总得分
+            const totalScoreA = gameState.scores.A.slice(0, round).reduce((sum, score) => sum + score, 0);
+            const totalScoreB = gameState.scores.B.slice(0, round).reduce((sum, score) => sum + score, 0);
+            
+            document.getElementById('currentTotalA').textContent = totalScoreA;
+            document.getElementById('currentTotalB').textContent = totalScoreB;
+            
+            // 显示本轮排名
+            const ranking = gameState.rankings[round];
+            const tbody = document.getElementById('roundRankingBody');
+            tbody.innerHTML = '';
+            
+            for (let rank = 1; rank <= 6; rank++) {
+                const player = ranking[rank];
+                const group = gameState.playerStats[player].group;
+                
+                const row = document.createElement('tr');
+                
+                const rankCell = document.createElement('td');
+                rankCell.textContent = rank;
+                if (rank === 1) {
+                    rankCell.className = 'first-place';
+                } else if (rank === 5 || rank === 6) {
+                    rankCell.className = 'last-place';
+                }
+                row.appendChild(rankCell);
+                
+                const playerCell = document.createElement('td');
+                playerCell.textContent = player;
+                playerCell.className = group === 'A' ? 'group-a-player' : 'group-b-player';
+                row.appendChild(playerCell);
+                
+                const groupCell = document.createElement('td');
+                groupCell.textContent = group === 'A' ? '甲组' : '乙组';
+                row.appendChild(groupCell);
+                
+                tbody.appendChild(row);
+            }
+            
+            // 显示第一名信息
+            document.getElementById('firstPlacePlayer').textContent = ranking[1];
+            document.getElementById('firstPlaceGroup').textContent = 
+                gameState.playerStats[ranking[1]].group === 'A' ? '甲组' : '乙组';
+        }
+        
+        // 更新所有统计数据
+        function updateAllStats() {
+            // 更新组别统计
+            const totalScoreA = gameState.scores.A.slice(0, gameState.currentRound).reduce((sum, score) => sum + score, 0);
+            const totalScoreB = gameState.scores.B.slice(0, gameState.currentRound).reduce((sum, score) => sum + score, 0);
+            
+            document.getElementById('teamAScore').textContent = totalScoreA;
+            document.getElementById('teamBScore').textContent = totalScoreB;
+            
+            // 计算各组第一名次数
+            const firstPlaceCountA = gameState.groups.A.reduce((sum, player) => 
+                sum + gameState.playerStats[player].firstPlaceCount, 0);
+            const firstPlaceCountB = gameState.groups.B.reduce((sum, player) => 
+                sum + gameState.playerStats[player].firstPlaceCount, 0);
+            
+            document.getElementById('teamAFirst').textContent = firstPlaceCountA;
+            document.getElementById('teamBFirst').textContent = firstPlaceCountB;
+            
+            // 更新所有轮次比赛统计表格
+            updateAllRoundsTable();
+            
+            // 更新选手表现统计
+            updatePlayerPerformanceStats();
+        }
+        
+        // 更新所有轮次比赛统计表格
+        function updateAllRoundsTable() {
+            const headerRow = document.getElementById('allRoundsHeader');
+            const tbody = document.getElementById('allRoundsBody');
+            
+            // 清空表格
+            headerRow.innerHTML = '<th>选手/轮次</th>';
+            tbody.innerHTML = '';
+            
+            // 创建表头
+            for (let round = 1; round <= 6; round++) {
+                const th = document.createElement('th');
+                th.textContent = `第${round}轮`;
+                headerRow.appendChild(th);
+            }
+            
+            // 为每个选手创建一行
+            gameState.players.forEach(player => {
+                const row = document.createElement('tr');
+                
+                // 选手姓名单元格
+                const nameCell = document.createElement('td');
+                nameCell.className = 'player-name-cell';
+                nameCell.textContent = player;
+                nameCell.classList.add(gameState.playerStats[player].group === 'A' ? 'group-a-player' : 'group-b-player');
+                row.appendChild(nameCell);
+                
+                // 每轮排名单元格
+                for (let round = 1; round <= 6; round++) {
+                    const rankCell = document.createElement('td');
+                    const rank = gameState.playerStats[player].ranks[round - 1];
+                    
+                    if (rank === '-') {
+                        rankCell.textContent = '-';
+                    } else {
+                        rankCell.textContent = rank;
+                        
+                        // 为第一名和最后两名添加特殊样式
+                        if (rank === 1) {
+                            rankCell.className = 'first-place';
+                        } else if (rank === 5 || rank === 6) {
+                            rankCell.className = 'last-place';
+                        }
+                    }
+                    
+                    row.appendChild(rankCell);
+                }
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 更新选手表现统计
+        function updatePlayerPerformanceStats() {
+            const container = document.getElementById('playerPerformanceStats');
+            container.innerHTML = '';
+            
+            // 按平均排名排序
+            const sortedPlayers = [...gameState.players].sort((a, b) => {
+                const statsA = gameState.playerStats[a];
+                const statsB = gameState.playerStats[b];
+                
+                // 只计算已进行轮次的平均排名
+                const roundsPlayed = gameState.currentRound;
+                const avgRankA = roundsPlayed > 0 ? (statsA.rankSum / roundsPlayed) : 0;
+                const avgRankB = roundsPlayed > 0 ? (statsB.rankSum / roundsPlayed) : 0;
+                
+                return avgRankA - avgRankB;
+            });
+            
+            // 创建选手表现列表
+            sortedPlayers.forEach((player, index) => {
+                const stats = gameState.playerStats[player];
+                const roundsPlayed = gameState.currentRound;
+                const avgRank = roundsPlayed > 0 ? (stats.rankSum / roundsPlayed).toFixed(2) : '-';
+                
+                const playerDiv = document.createElement('div');
+                playerDiv.style.padding = '10px';
+                playerDiv.style.marginBottom = '8px';
+                playerDiv.style.backgroundColor = '#f8f9fa';
+                playerDiv.style.borderRadius = '5px';
+                playerDiv.style.borderLeft = `4px solid ${stats.group === 'A' ? '#3498db' : '#e74c3c'}`;
+                
+                playerDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: ${stats.group === 'A' ? '#3498db' : '#e74c3c'};">${player}</strong>
+                            <div style="font-size: 0.9rem; color: #7f8c8d;">${stats.group === 'A' ? '甲组' : '乙组'}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.2rem; font-weight: bold;">${avgRank}</div>
+                            <div style="font-size: 0.9rem; color: #7f8c8d;">平均排名</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.9rem;">
+                        <div>第一名：${stats.firstPlaceCount}次</div>
+                        <div>最好名次：${stats.ranks.filter(r => r !== '-').length > 0 ? Math.min(...stats.ranks.filter(r => r !== '-')) : '-'}</div>
+                    </div>
+                `;
+                
+                container.appendChild(playerDiv);
+            });
+        }
+        
+        // 更新所有图表
+        function updateAllCharts() {
+            updateScoreChart();
+            updateRankingChart();
+            updateTeamScoreChart();
+            updateFirstPlaceChart();
+        }
+        
+        // 更新得分图表
+        function updateScoreChart() {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            // 如果已有图表实例，则销毁
+            if (scoreChart) {
+                scoreChart.destroy();
+            }
+            
+            const labels = ['第1轮', '第2轮', '第3轮', '第4轮', '第5轮', '第6轮'];
+            const cumulativeA = [];
+            const cumulativeB = [];
+            
+            let sumA = 0;
+            let sumB = 0;
+            
+            for (let i = 0; i < 6; i++) {
+                sumA += gameState.scores.A[i];
+                sumB += gameState.scores.B[i];
+                cumulativeA.push(sumA);
+                cumulativeB.push(sumB);
+            }
+            
+            scoreChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.slice(0, gameState.currentRound),
+                    datasets: [
+                        {
+                            label: '甲组累计得分',
+                            data: cumulativeA.slice(0, gameState.currentRound),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: '乙组累计得分',
+                            data: cumulativeB.slice(0, gameState.currentRound),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '两组累计得分走势图',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '累计得分'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '比赛轮次'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新排名图表
+        function updateRankingChart() {
+            const ctx = document.getElementById('rankingChart').getContext('2d');
+            
+            // 如果已有图表实例，则销毁
+            if (rankingChart) {
+                rankingChart.destroy();
+            }
+            
+            // 计算每个选手的平均排名
+            const playerNames = [];
+            const avgRanks = [];
+            const colors = [];
+            
+            gameState.players.forEach(player => {
+                const stats = gameState.playerStats[player];
+                const roundsPlayed = gameState.currentRound;
+                const avgRank = roundsPlayed > 0 ? (stats.rankSum / roundsPlayed) : 0;
+                
+                playerNames.push(player);
+                avgRanks.push(avgRank);
+                
+                // 根据组别设置颜色
+                colors.push(stats.group === 'A' ? '#3498db' : '#e74c3c');
+            });
+            
+            rankingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: playerNames,
+                    datasets: [{
+                        label: '平均排名 (数值越小越好)',
+                        data: avgRanks,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '个人平均排名',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            reverse: true, // 排名越小越好，所以反转Y轴
+                            title: {
+                                display: true,
+                                text: '平均排名'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '选手'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新组别得分分布图表
+        function updateTeamScoreChart() {
+            const ctx = document.getElementById('teamScoreChart').getContext('2d');
+            
+            // 如果已有图表实例，则销毁
+            if (teamScoreChart) {
+                teamScoreChart.destroy();
+            }
+            
+            // 计算各轮得分分布
+            const labels = ['第1轮', '第2轮', '第3轮', '第4轮', '第5轮', '第6轮'];
+            
+            teamScoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.slice(0, gameState.currentRound),
+                    datasets: [
+                        {
+                            label: '甲组得分',
+                            data: gameState.scores.A.slice(0, gameState.currentRound),
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498db',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '乙组得分',
+                            data: gameState.scores.B.slice(0, gameState.currentRound),
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: '#e74c3c',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '各轮得分分布',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '得分'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '比赛轮次'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新第一名次数图表
+        function updateFirstPlaceChart() {
+            const ctx = document.getElementById('firstPlaceChart').getContext('2d');
+            
+            // 如果已有图表实例，则销毁
+            if (firstPlaceChart) {
+                firstPlaceChart.destroy();
+            }
+            
+            // 计算每个选手的第一名次数
+            const playerNames = [];
+            const firstPlaceCounts = [];
+            const colors = [];
+            
+            gameState.players.forEach(player => {
+                const stats = gameState.playerStats[player];
+                
+                playerNames.push(player);
+                firstPlaceCounts.push(stats.firstPlaceCount);
+                
+                // 根据组别设置颜色
+                colors.push(stats.group === 'A' ? '#3498db' : '#e74c3c');
+            });
+            
+            firstPlaceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: playerNames,
+                    datasets: [{
+                        label: '获得第一名次数',
+                        data: firstPlaceCounts,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '个人第一名次数统计',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '第一名次数'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '选手'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 计算最终结果
+        function calculateFinalResults() {
+            // 计算总得分
+            const totalScoreA = gameState.scores.A.reduce((sum, score) => sum + score, 0);
+            const totalScoreB = gameState.scores.B.reduce((sum, score) => sum + score, 0);
+            
+            // 更新总得分显示
+            document.getElementById('totalScoreA').textContent = totalScoreA;
+            document.getElementById('totalScoreB').textContent = totalScoreB;
+            
+            // 判断胜者
+            let winnerMessage = '';
+            if (totalScoreA > totalScoreB) {
+                winnerMessage = '甲组获胜！';
+            } else if (totalScoreB > totalScoreA) {
+                winnerMessage = '乙组获胜！';
+            } else {
+                // 计算第一名次数
+                const firstPlaceCountA = gameState.groups.A.reduce((sum, player) => 
+                    sum + gameState.playerStats[player].firstPlaceCount, 0);
+                const firstPlaceCountB = gameState.groups.B.reduce((sum, player) => 
+                    sum + gameState.playerStats[player].firstPlaceCount, 0);
+                
+                if (firstPlaceCountA > firstPlaceCountB) {
+                    winnerMessage = '平局！甲组获得第一名次数更多，甲组获胜！';
+                } else if (firstPlaceCountB > firstPlaceCountA) {
+                    winnerMessage = '平局！乙组获得第一名次数更多，乙组获胜！';
+                } else {
+                    winnerMessage = '平局！需加赛一副牌决定胜负！';
+                }
+            }
+            
+            document.getElementById('winnerMessage').textContent = winnerMessage;
+            
+            // 更新每轮积分表格
+            updateRoundScoresTable();
+            
+            // 更新个人统计表格
+            updatePlayerStatsTable();
+            
+            // 更新所有统计数据
+            updateAllStats();
+            
+            // 更新所有图表
+            updateAllCharts();
+        }
+        
+        // 更新每轮积分表格
+        function updateRoundScoresTable() {
+            const tbody = document.getElementById('roundScoresBody');
+            tbody.innerHTML = '';
+            
+            for (let round = 1; round <= 6; round++) {
+                const row = document.createElement('tr');
+                
+                // 轮次
+                const roundCell = document.createElement('td');
+                roundCell.textContent = `第${round}轮`;
+                row.appendChild(roundCell);
+                
+                // 甲组得分
+                const scoreACell = document.createElement('td');
+                scoreACell.textContent = gameState.scores.A[round - 1];
+                row.appendChild(scoreACell);
+                
+                // 乙组得分
+                const scoreBCell = document.createElement('td');
+                scoreBCell.textContent = gameState.scores.B[round - 1];
+                row.appendChild(scoreBCell);
+                
+                // 本轮第一名
+                const firstPlaceCell = document.createElement('td');
+                if (gameState.rankings[round]) {
+                    firstPlaceCell.textContent = gameState.rankings[round][1];
+                } else {
+                    firstPlaceCell.textContent = '-';
+                }
+                row.appendChild(firstPlaceCell);
+                
+                tbody.appendChild(row);
+            }
+        }
+        
+        // 更新个人统计表格
+        function updatePlayerStatsTable() {
+            const tbody = document.getElementById('playerStatsBody');
+            tbody.innerHTML = '';
+            
+            // 按平均排名排序
+            const sortedPlayers = [...gameState.players].sort((a, b) => {
+                const avgA = gameState.playerStats[a].rankSum / 6;
+                const avgB = gameState.playerStats[b].rankSum / 6;
+                return avgA - avgB;
+            });
+            
+            sortedPlayers.forEach(player => {
+                const stats = gameState.playerStats[player];
+                const row = document.createElement('tr');
+                
+                // 选手姓名
+                const nameCell = document.createElement('td');
+                nameCell.textContent = player;
+                row.appendChild(nameCell);
+                
+                // 组别
+                const groupCell = document.createElement('td');
+                groupCell.textContent = stats.group === 'A' ? '甲组' : '乙组';
+                row.appendChild(groupCell);
+                
+                // 第一名次数
+                const firstPlaceCell = document.createElement('td');
+                firstPlaceCell.textContent = stats.firstPlaceCount;
+                row.appendChild(firstPlaceCell);
+                
+                // 平均排名
+                const avgRankCell = document.createElement('td');
+                const avgRank = (stats.rankSum / 6).toFixed(2);
+                avgRankCell.textContent = avgRank;
+                row.appendChild(avgRankCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // 保存当前游戏到本地存储
+        function saveCurrentGame() {
+            const saveNameInput = document.getElementById('saveName');
+            let gameName = saveNameInput.value.trim();
+            
+            if (!gameName) {
+                // 如果没有输入名称，使用默认名称
+                const date = new Date();
+                gameName = `比赛 ${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+            }
+            
+            gameState.gameName = gameName;
+            gameState.updatedAt = new Date().toISOString();
+            
+            // 准备保存的数据
+            const gameData = {
+                id: gameState.gameId,
+                name: gameState.gameName,
+                createdAt: gameState.createdAt,
+                updatedAt: gameState.updatedAt,
+                players: gameState.players,
+                groups: gameState.groups,
+                currentRound: gameState.currentRound,
+                rankings: gameState.rankings,
+                scores: gameState.scores,
+                playerStats: gameState.playerStats
+            };
+            
+            // 保存到localStorage
+            const history = getHistory();
+            history[gameState.gameId] = gameData;
+            localStorage.setItem('daguailuzi_history', JSON.stringify(history));
+            
+            // 显示保存成功消息
+            const saveMessage = document.getElementById('saveMessage');
+            saveMessage.innerHTML = `<span style="color: #27ae60;">✓ 比赛已保存为: "${gameName}"</span>`;
+            saveMessage.style.display = 'block';
+            
+            // 清空输入框
+            saveNameInput.value = '';
+            
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                saveMessage.style.display = 'none';
+            }, 3000);
+            
+            // 刷新历史记录列表
+            refreshHistoryList();
+            
+            return true;
+        }
+        
+        // 自动保存游戏
+        function autoSaveGame() {
+            // 只有在有游戏名称时才自动保存
+            if (gameState.gameName) {
+                saveCurrentGame();
+            }
+        }
+        
+        // 从本地存储获取历史记录
+        function getHistory() {
+            const historyJson = localStorage.getItem('daguailuzi_history');
+            return historyJson ? JSON.parse(historyJson) : {};
+        }
+        
+        // 刷新历史记录列表
+        function refreshHistoryList() {
+            const history = getHistory();
+            const historyList = document.getElementById('historyList');
+            const historyCount = document.getElementById('historyCount');
+            
+            // 清空列表
+            historyList.innerHTML = '';
+            
+            // 获取所有历史记录并排序（按更新时间倒序）
+            const historyArray = Object.values(history);
+            historyArray.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            
+            // 更新计数
+            historyCount.textContent = historyArray.length;
+            
+            if (historyArray.length === 0) {
+                // 没有历史记录
+                historyList.innerHTML = `
+                    <div class="no-history">
+                        <p>暂无历史记录</p>
+                        <p>开始比赛并保存后，记录会显示在这里</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 显示历史记录
+            historyArray.forEach(game => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.dataset.id = game.id;
+                
+                // 计算比赛状态
+                const isCompleted = game.currentRound === 6 && Object.keys(game.rankings).length === 6;
+                const totalScoreA = game.scores.A.reduce((sum, score) => sum + score, 0);
+                const totalScoreB = game.scores.B.reduce((sum, score) => sum + score, 0);
+                
+                // 格式化日期
+                const updatedDate = new Date(game.updatedAt);
+                const dateStr = `${updatedDate.getFullYear()}-${(updatedDate.getMonth()+1).toString().padStart(2, '0')}-${updatedDate.getDate().toString().padStart(2, '0')} ${updatedDate.getHours().toString().padStart(2, '0')}:${updatedDate.getMinutes().toString().padStart(2, '0')}`;
+                
+                historyItem.innerHTML = `
+                    <div class="history-title">${game.name}</div>
+                    <div class="history-meta">
+                        <div>${dateStr}</div>
+                        <div>${isCompleted ? '已完成' : `第${game.currentRound}轮`}</div>
+                    </div>
+                    <div class="history-stats">
+                        <div class="history-stat">甲组: ${totalScoreA}分</div>
+                        <div class="history-stat">乙组: ${totalScoreB}分</div>
+                        <div class="history-stat">选手: ${game.players.length}人</div>
+                    </div>
+                `;
+                
+                // 点击事件
+                historyItem.addEventListener('click', (e) => {
+                    // 如果点击的是按钮，不触发选择
+                    if (e.target.tagName === 'BUTTON') return;
+                    
+                    // 移除所有活动的项目
+                    document.querySelectorAll('.history-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // 添加活动状态
+                    historyItem.classList.add('active');
+                    
+                    // 设置选中的ID
+                    selectedHistoryId = game.id;
+                    
+                    // 显示详情
+                    showHistoryDetails(game);
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 显示历史记录详情
+        function showHistoryDetails(game) {
+            const historyDetails = document.getElementById('historyDetails');
+            const detailContent = document.getElementById('historyDetailContent');
+            
+            // 计算比赛状态
+            const isCompleted = game.currentRound === 6 && Object.keys(game.rankings).length === 6;
+            const totalScoreA = game.scores.A.reduce((sum, score) => sum + score, 0);
+            const totalScoreB = game.scores.B.reduce((sum, score) => sum + score, 0);
+            const winner = totalScoreA > totalScoreB ? '甲组' : totalScoreB > totalScoreA ? '乙组' : '平局';
+            
+            // 格式化日期
+            const createdDate = new Date(game.createdAt);
+            const updatedDate = new Date(game.updatedAt);
+            const createdStr = `${createdDate.getFullYear()}-${(createdDate.getMonth()+1).toString().padStart(2, '0')}-${createdDate.getDate().toString().padStart(2, '0')} ${createdDate.getHours().toString().padStart(2, '0')}:${createdDate.getMinutes().toString().padStart(2, '0')}`;
+            const updatedStr = `${updatedDate.getFullYear()}-${(updatedDate.getMonth()+1).toString().padStart(2, '0')}-${updatedDate.getDate().toString().padStart(2, '0')} ${updatedDate.getHours().toString().padStart(2, '0')}:${updatedDate.getMinutes().toString().padStart(2, '0')}`;
+            
+            // 构建详情内容
+            let detailHTML = `
+                <p><strong>比赛名称:</strong> ${game.name}</p>
+                <p><strong>创建时间:</strong> ${createdStr}</p>
+                <p><strong>最后更新:</strong> ${updatedStr}</p>
+                <p><strong>比赛状态:</strong> ${isCompleted ? '已完成' : `进行中 (第${game.currentRound}轮)`}</p>
+                <p><strong>比赛结果:</strong> 甲组 ${totalScoreA} : ${totalScoreB} 乙组 (${winner}${totalScoreA === totalScoreB ? '，需加赛' : '获胜'})</p>
+                
+                <h4 style="margin-top: 15px;">选手列表</h4>
+                <div style="display: flex; gap: 15px;">
+                    <div>
+                        <strong>甲组:</strong>
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            ${game.groups.A.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>乙组:</strong>
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            ${game.groups.B.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 15px;">每轮得分</h4>
+                <table class="score-table" style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>轮次</th>
+                            <th>甲组得分</th>
+                            <th>乙组得分</th>
+                            <th>第一名</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            for (let round = 1; round <= 6; round++) {
+                const scoreA = game.scores.A[round - 1] || 0;
+                const scoreB = game.scores.B[round - 1] || 0;
+                const firstPlace = game.rankings[round] ? game.rankings[round][1] : '-';
+                
+                detailHTML += `
+                    <tr>
+                        <td>第${round}轮</td>
+                        <td>${scoreA}</td>
+                        <td>${scoreB}</td>
+                        <td>${firstPlace}</td>
+                    </tr>
+                `;
+            }
+            
+            detailHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            detailContent.innerHTML = detailHTML;
+            historyDetails.style.display = 'block';
+            
+            // 滚动到详情区域
+            historyDetails.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // 加载选中的历史记录
+        function loadSelectedHistory() {
+            if (!selectedHistoryId) {
+                alert('请先选择一条历史记录！');
+                return;
+            }
+            
+            const history = getHistory();
+            const gameData = history[selectedHistoryId];
+            
+            if (!gameData) {
+                alert('记录不存在或已被删除！');
+                refreshHistoryList();
+                return;
+            }
+            
+            // 确认加载
+            if (!confirm(`确定要加载"${gameData.name}"吗？当前未保存的数据将会丢失。`)) {
+                return;
+            }
+            
+            // 加载游戏数据
+            Object.assign(gameState, gameData);
+            
+            // 更新UI
+            displayGroups();
+            
+            // 显示成功消息
+            alert(`比赛"${gameData.name}"已加载成功！`);
+            
+            // 切换到游戏页面
+            switchPage('game');
+        }
+        
+        // 删除选中的历史记录
+        function deleteSelectedHistory() {
+            if (!selectedHistoryId) {
+                alert('请先选择一条历史记录！');
+                return;
+            }
+            
+            const history = getHistory();
+            const gameData = history[selectedHistoryId];
+            
+            if (!gameData) {
+                alert('记录不存在或已被删除！');
+                refreshHistoryList();
+                return;
+            }
+            
+            // 确认删除
+            if (!confirm(`确定要删除"${gameData.name}"吗？此操作不可撤销。`)) {
+                return;
+            }
+            
+            // 删除记录
+            delete history[selectedHistoryId];
+            localStorage.setItem('daguailuzi_history', JSON.stringify(history));
+            
+            // 重置选中ID
+            selectedHistoryId = null;
+            
+            // 隐藏详情
+            document.getElementById('historyDetails').style.display = 'none';
+            
+            // 刷新列表
+            refreshHistoryList();
+            
+            // 显示成功消息
+            alert('记录已删除！');
+        }
+        
+        // 清空所有历史记录
+        function clearAllHistory() {
+            const history = getHistory();
+            if (Object.keys(history).length === 0) {
+                alert('暂无历史记录可清空！');
+                return;
+            }
+            
+            // 确认清空
+            if (!confirm('确定要清空所有历史记录吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            // 清空历史记录
+            localStorage.removeItem('daguailuzi_history');
+            
+            // 重置选中ID
+            selectedHistoryId = null;
+            
+            // 隐藏详情
+            document.getElementById('historyDetails').style.display = 'none';
+            
+            // 刷新列表
+            refreshHistoryList();
+            
+            // 显示成功消息
+            alert('所有历史记录已清空！');
+        }
+        
+        // 切换页面
+        function switchPage(pageName) {
+            // 更新标签状态
+            mobileTabs.forEach(tab => {
+                if (tab.dataset.page === pageName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // 更新页面显示
+            pageSections.forEach(section => {
+                if (section.id === pageName + 'Page') {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+            
+            // 如果是PC端，显示所有内容
+            if (window.innerWidth >= 768) {
+                // PC端特殊处理：显示所有页面内容
+                pageSections.forEach(section => {
+                    section.classList.add('active');
+                });
+            }
+            
+            // 如果是历史记录页面，刷新列表
+            if (pageName === 'history') {
+                refreshHistoryList();
+            }
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        
+        // 事件监听
+        startGameBtn.addEventListener('click', () => {
+            if (initGame()) {
+                displayGroups();
+            }
+        });
+        
+        resetAllBtn.addEventListener('click', () => {
+            if (confirm('确定要重置所有数据吗？当前未保存的数据将会丢失！')) {
+                // 重置游戏状态
+                gameState.players = [];
+                gameState.groups = { A: [], B: [] };
+                gameState.currentRound = 1;
+                gameState.rankings = {};
+                gameState.scores = { A: Array(6).fill(0), B: Array(6).fill(0) };
+                gameState.playerStats = {};
+                gameState.gameId = null;
+                gameState.gameName = '';
+                gameState.createdAt = null;
+                gameState.updatedAt = null;
+                
+                // 清空输入
+                for (let i = 1; i <= 6; i++) {
+                    document.getElementById(`player${i}`).value = '';
+                }
+                
+                // 重置UI
+                document.getElementById('groupAList').innerHTML = '';
+                document.getElementById('groupBList').innerHTML = '';
+                document.getElementById('saveName').value = '';
+                document.getElementById('saveMessage').style.display = 'none';
+                
+                // 切换到输入页面
+                switchPage('input');
+                
+                // 销毁图表
+                if (scoreChart) {
+                    scoreChart.destroy();
+                    scoreChart = null;
+                }
+                if (rankingChart) {
+                    rankingChart.destroy();
+                    rankingChart = null;
+                }
+                if (teamScoreChart) {
+                    teamScoreChart.destroy();
+                    teamScoreChart = null;
+                }
+                if (firstPlaceChart) {
+                    firstPlaceChart.destroy();
+                    firstPlaceChart = null;
+                }
+            }
+        });
+        
+        prevRoundBtn.addEventListener('click', () => {
+            if (gameState.currentRound > 1) {
+                gameState.currentRound--;
+                initRankingInput();
+                updateGameControls();
+                
+                // 更新可视化图表
+                updateAllCharts();
+            }
+        });
+        
+        nextRoundBtn.addEventListener('click', () => {
+            if (gameState.currentRound < 6 && gameState.rankings[gameState.currentRound]) {
+                gameState.currentRound++;
+                initRankingInput();
+                updateGameControls();
+            } else if (!gameState.rankings[gameState.currentRound]) {
+                alert('请先提交当前轮次的排名！');
+            }
+        });
+        
+        submitRoundBtn.addEventListener('click', submitRoundRankings);
+        
+        continueGameBtn.addEventListener('click', () => {
+            // 如果不是最后一轮，自动进入下一轮
+            if (gameState.currentRound < 6) {
+                switchPage('game');
+            } else {
+                // 如果是最后一轮，显示最终结果
+                calculateFinalResults();
+                switchPage('results');
+            }
+        });
+        
+        viewChartsBtn.addEventListener('click', () => {
+            switchPage('visualization');
+        });
+        
+        backToStatsBtn.addEventListener('click', () => {
+            switchPage('stats');
+        });
+        
+        backToGameBtn.addEventListener('click', () => {
+            switchPage('game');
+        });
+        
+        viewHistoryBtn.addEventListener('click', () => {
+            switchPage('history');
+        });
+        
+        saveGameBtn.addEventListener('click', () => {
+            saveCurrentGame();
+        });
+        
+        saveCurrentBtn.addEventListener('click', () => {
+            // 切换到游戏页面并聚焦保存输入框
+            switchPage('game');
+            setTimeout(() => {
+                document.getElementById('saveName').focus();
+            }, 100);
+        });
+        
+        saveFinalResultBtn.addEventListener('click', () => {
+            if (gameState.currentRound === 6 && Object.keys(gameState.rankings).length === 6) {
+                // 如果游戏名称为空，提示输入
+                if (!gameState.gameName) {
+                    const gameName = prompt('请输入比赛名称：', `比赛 ${new Date().toLocaleDateString()}`);
+                    if (gameName) {
+                        gameState.gameName = gameName;
+                        saveCurrentGame();
+                    }
+                } else {
+                    saveCurrentGame();
+                }
+            } else {
+                alert('请先完成所有六轮比赛！');
+            }
+        });
+        
+        refreshHistoryBtn.addEventListener('click', () => {
+            refreshHistoryList();
+        });
+        
+        clearAllHistoryBtn.addEventListener('click', clearAllHistory);
+        
+        loadSelectedHistoryBtn.addEventListener('click', loadSelectedHistory);
+        
+        deleteSelectedHistoryBtn.addEventListener('click', deleteSelectedHistory);
+        
+        closeHistoryDetailsBtn.addEventListener('click', () => {
+            document.getElementById('historyDetails').style.display = 'none';
+            // 移除所有活动的项目
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            selectedHistoryId = null;
+        });
+        
+        // 移动端标签页点击事件
+        mobileTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchPage(tab.dataset.page);
+            });
+        });
+        
+        // 窗口大小变化时调整显示
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                // PC端显示所有页面内容
+                pageSections.forEach(section => {
+                    section.classList.add('active');
+                });
+            } else {
+                // 移动端只显示当前页面内容
+                const activeTab = document.querySelector('.mobile-tab.active');
+                if (activeTab) {
+                    switchPage(activeTab.dataset.page);
+                }
+            }
+        });
+        
+        // 初始化示例数据
+        function initExampleData() {
+            // 示例选手姓名
+            const exampleNames = ['张琦', '晓强', '老吴', '何腾', '程玮', '梅挺'];
+            
+            exampleNames.forEach((name, index) => {
+                document.getElementById(`player${index + 1}`).value = name;
+            });
+        }
+        
+        // 页面加载时初始化示例数据
+        window.addEventListener('DOMContentLoaded', initExampleData);
+        
+        // 页面加载后设置初始显示
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth >= 768) {
+                // PC端显示所有页面内容
+                pageSections.forEach(section => {
+                    section.classList.add('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
